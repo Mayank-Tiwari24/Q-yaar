@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Q Yaar",
+    "slug": "q-yaar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0A4D4A",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.qyaar.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A4D4A"
+      },
+      "package": "com.qyaar.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon_new.png"
+    },
+    "plugins": [
+      "expo-asset",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}
