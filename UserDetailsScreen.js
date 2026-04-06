@@ -12,6 +12,7 @@ import {
     Image,
     Alert,
     Keyboard,
+    KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
@@ -24,7 +25,7 @@ import Svg, {
     Stop,
     Line,
 } from 'react-native-svg';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -145,6 +146,8 @@ const isEmailValid = (v) => {
 // ─── Main Screen ────────────────────────────────────────────────────────────
 const UserDetailsScreen = () => {
     const navigation = useNavigation();
+    const route = useRoute();
+    const { qrId } = route.params || {};
 
     // Form state
     const [fullName, setFullName] = useState('');
@@ -156,6 +159,7 @@ const UserDetailsScreen = () => {
     const [emailVerified, setEmailVerified] = useState(false);
     const [vehicleNumber, setVehicleNumber] = useState('');
     const [licenseImage, setLicenseImage] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Animations
     const fadeIn = useRef(new Animated.Value(0)).current;
@@ -164,16 +168,8 @@ const UserDetailsScreen = () => {
     const buttonOpacity = useRef(new Animated.Value(0.4)).current;
     const scaleButton = useRef(new Animated.Value(1)).current;
 
-    // Computed validity
-    const allValid =
-        fullName.trim().length > 0 &&
-        dob !== null &&
-        isPhoneValid(mobile) &&
-        mobileVerified &&
-        isEmailValid(email) &&
-        emailVerified &&
-        vehicleNumber.trim().length > 0 &&
-        licenseImage !== null;
+    // Computed validity (Must have fullName (2), mobile (10), vehicleNumber (4))
+    const allValid = fullName.trim().length >= 2 && mobile.length === 10 && vehicleNumber.trim().length >= 4;
 
     useEffect(() => {
         Animated.timing(fadeIn, { toValue: 1, duration: 600, useNativeDriver: true }).start();
@@ -275,20 +271,54 @@ const UserDetailsScreen = () => {
         }
     };
 
-    const handleSubmit = () => {
-        if (!allValid) {
+    const handleSubmit = async () => {
+        if (!allValid || isSubmitting) {
             triggerShake();
             return;
         }
         Keyboard.dismiss();
-        console.log('Submitting:', { fullName, dob, mobile, email, vehicleNumber, licenseImage });
-        // Navigate to success screen (placeholder)
-        // navigation.navigate('Success');
-        Alert.alert('Success!', 'Your QR has been activated successfully.');
+
+        if (!qrId) {
+            Alert.alert('Missing QR', 'No QR ID was detected. Please go back and scan the QR code first.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('http://10.29.188.101:5000/api/qr/claim', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    qrId,
+                    mobileNumber: mobile,
+                    vehicleNumber: vehicleNumber,
+                    ownerName: fullName,
+                    model: 'Not Specified', // Default model for now since App UI doesn't collect it
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                Alert.alert('Success!', 'Your vehicle is now permanently linked to this QR code.');
+                navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+            } else {
+                Alert.alert('Verification Failed', data.message || 'Error linking vehicle to QR.');
+                triggerShake();
+            }
+        } catch (error) {
+            console.error('Submit Error:', error);
+            Alert.alert('Network Error', 'Could not connect to the backend server. Please make sure it is running.');
+            triggerShake();
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handlePressIn = () => {
-        if (allValid) {
+        if (allValid && !isSubmitting) {
             Animated.spring(scaleButton, { toValue: 0.94, friction: 5, useNativeDriver: true }).start();
         }
     };
@@ -309,12 +339,17 @@ const UserDetailsScreen = () => {
             <View style={styles.bgDecor1} />
             <View style={styles.bgDecor2} />
 
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                bounces={false}
+            <KeyboardAvoidingView 
+                style={{ flex: 1 }} 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                >
                 {/* Back button */}
                 <Animated.View style={[styles.backButton, { opacity: fadeIn }]}>
                     <TouchableOpacity
@@ -520,7 +555,8 @@ const UserDetailsScreen = () => {
                 </Animated.View>
 
                 <View style={{ height: 30 }} />
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </LinearGradient>
     );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
+    TextInput,
     TouchableOpacity,
     StyleSheet,
     Animated,
@@ -191,7 +192,7 @@ const RegisterScreen = () => {
     const step2Slide = useRef(new Animated.Value(30)).current;
 
     // Shared success logic (defined before useEffect so it can be called from setTimeout)
-    const triggerScanSuccess = () => {
+    const triggerScanSuccess = (scannedQrId) => {
         if (scanProcessed.current) return;
         scanProcessed.current = true;
         setScanSuccess(true);
@@ -210,7 +211,7 @@ const RegisterScreen = () => {
             setCountdown(count);
             if (count <= 0) {
                 clearInterval(timer);
-                navigation.replace('UserDetails');
+                navigation.replace('UserDetails', { qrId: scannedQrId });
             }
         }, 1000);
     };
@@ -259,12 +260,6 @@ const RegisterScreen = () => {
             ])
         ).start();
 
-        // Auto-simulate QR scan after 3 seconds (no backend yet)
-        const autoTimer = setTimeout(() => {
-            triggerScanSuccess();
-        }, 3000);
-
-        return () => clearTimeout(autoTimer);
     }, []);
 
     const iconTranslateY = floatAnim.interpolate({
@@ -285,15 +280,26 @@ const RegisterScreen = () => {
     const cameraGranted = permission?.granted;
     const isWeb = Platform.OS === 'web';
 
-    // Handle barcode scanned (camera)
+    // State for web QR input
+    const [webQrInput, setWebQrInput] = useState('');
+
+    // Handle barcode scanned (camera - mobile only)
     const handleBarcodeScanned = (result) => {
         console.log('QR scanned:', result.data);
-        triggerScanSuccess();
+        // The QR holds a URL like http://.../qr/UUID
+        const segments = result.data.split('/');
+        const qrId = segments.pop() || result.data; // fallback
+        triggerScanSuccess(qrId);
     };
 
-    // Simulate scan for web testing
-    const handleSimulateScan = () => {
-        triggerScanSuccess();
+    // Handle web QR input submit
+    const handleWebQrSubmit = () => {
+        const input = webQrInput.trim();
+        if (!input) return;
+        // Extract qrId from URL or use as-is
+        const segments = input.split('/');
+        const qrId = segments.pop() || input;
+        triggerScanSuccess(qrId);
     };
 
     return (
@@ -370,7 +376,7 @@ const RegisterScreen = () => {
                 >
                     <View style={styles.cameraWrapper}>
                         {isWeb ? (
-                            /* Web: camera not supported, show simulate */
+                            /* Web: no camera — ask user to open on mobile */
                             <View style={styles.permissionBox}>
                                 <Svg width={40} height={40} viewBox="0 0 40 40">
                                     <Rect x="4" y="4" width="32" height="32" rx="6" stroke="#5EEAD4" strokeWidth="2" fill="none" />
@@ -381,19 +387,10 @@ const RegisterScreen = () => {
                                     <Rect x="10" y="22" width="8" height="8" rx="1.5" stroke="#5EEAD4" strokeWidth="1.5" fill="none" />
                                     <Rect x="12" y="24" width="4" height="4" rx="0.5" fill="#5EEAD4" />
                                 </Svg>
-                                <Text style={[styles.permissionTitle, { marginTop: 14 }]}>Scan QR Code</Text>
+                                <Text style={[styles.permissionTitle, { marginTop: 14 }]}>Camera Required</Text>
                                 <Text style={styles.permissionText}>
-                                    Tap below to simulate a QR scan.
+                                    Please open this app on your mobile device or tablet to scan QR codes using the camera.
                                 </Text>
-                                {!scanSuccess && (
-                                    <TouchableOpacity
-                                        style={styles.permissionButton}
-                                        onPress={handleSimulateScan}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Text style={styles.permissionButtonText}>Simulate QR Scan</Text>
-                                    </TouchableOpacity>
-                                )}
                             </View>
                         ) : cameraGranted ? (
                             <CameraView

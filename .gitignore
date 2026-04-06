@@ -1,7 +1,26 @@
+# Dependencies
 node_modules/
 .expo/
+
+# Environment files (NEVER push these)
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# OS files
 .DS_Store
 *.local
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

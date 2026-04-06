@@ -8,6 +8,13 @@ import SelectionScreen from './SelectionScreen';
 import LoginScreen from './LoginScreen';
 import RegisterScreen from './RegisterScreen';
 import UserDetailsScreen from './UserDetailsScreen';
+import HomeScreen from './HomeScreen';
+import ScanScreen from './ScanScreen';
+import VehiclesScreen from './VehiclesScreen';
+import ActivityScreen from './ActivityScreen';
+import ProfileScreen from './ProfileScreen';
+import SearchVehicleScreen from './SearchVehicleScreen';
+import MyQRScreen from './MyQRScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +34,13 @@ function App() {
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="Register" component={RegisterScreen} />
                 <Stack.Screen name="UserDetails" component={UserDetailsScreen} />
+                <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="Scan" component={ScanScreen} />
+                <Stack.Screen name="Vehicles" component={VehiclesScreen} />
+                <Stack.Screen name="Activity" component={ActivityScreen} />
+                <Stack.Screen name="Profile" component={ProfileScreen} />
+                <Stack.Screen name="SearchVehicle" component={SearchVehicleScreen} />
+                <Stack.Screen name="MyQR" component={MyQRScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
