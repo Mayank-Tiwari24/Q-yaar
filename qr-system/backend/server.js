@@ -13,14 +13,28 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
+app.set('trust proxy', 1); // Trust Render load balancer for rate limiter
+
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
-    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+    ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(url => url.trim().replace(/\/$/, '')) : []),
 ];
+
 app.use(cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Check if origin matches any of the allowed origins (strip trailing slash from incoming too)
+        const cleanOrigin = origin.replace(/\/$/, '');
+        if (allowedOrigins.indexOf(cleanOrigin) !== -1) {
+            return callback(null, true);
+        }
+        
+        return callback(new Error('CORS policy violation'), false);
+    },
     credentials: true,
 }));
 app.use(express.json());
