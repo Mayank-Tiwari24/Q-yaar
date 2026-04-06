@@ -466,8 +466,8 @@ export default function Dashboard() {
             <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Q Yaar Admin · Auto-refresh every 30s</p>
                 <div style={{ display: 'flex', gap: 12 }}>
-                    <a href="http://localhost:5173" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>QR Generator →</a>
-                    <a href="http://localhost:5174" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textDecoration: 'none' }}>Website →</a>
+                    <a href="https://qyaar-qr.vercel.app" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--teal)', textDecoration: 'none' }}>QR Generator →</a>
+                    <a href="https://q-yaar.vercel.app" target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-dim)', textDecoration: 'none' }}>Website →</a>
                 </div>
             </div>
         </div>

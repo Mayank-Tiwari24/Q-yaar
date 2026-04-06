@@ -190,7 +190,7 @@ export default function LandingPage() {
             </p>
 
             <div className="anim-fade-up delay-3" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              <a href="http://localhost:5173" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+              <a href="https://qyaar-qr.vercel.app" className="btn btn-primary" style={{ textDecoration: 'none' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
                 Get Free QR
               </a>
@@ -388,7 +388,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="http://localhost:5173" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', textDecoration: 'none' }}>
+              <a href="https://qyaar-qr.vercel.app" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', textDecoration: 'none' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download Free QR
               </a>
@@ -429,7 +429,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="http://localhost:5173" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', textDecoration: 'none' }}>
+              <a href="https://qyaar-qr.vercel.app" className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', textDecoration: 'none' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
                 Order Physical QR
               </a>
