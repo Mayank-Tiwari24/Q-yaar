@@ -28,6 +28,7 @@ import Svg, {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import API_URL from './config';
 
 const { width } = Dimensions.get('window');
 
@@ -285,7 +286,7 @@ const UserDetailsScreen = () => {
 
         setIsSubmitting(true);
         try {
-            const response = await fetch('http://10.29.188.101:5000/api/qr/claim', {
+            const response = await fetch(`${API_URL}/qr/claim`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

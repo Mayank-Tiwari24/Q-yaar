@@ -6,7 +6,7 @@ const Notification = require('../models/Notification');
 const generateQR = async (req, res) => {
     try {
         const qrId = uuidv4();
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://qyaar-qr.vercel.app';
 
         const newQR = await QR.create({
             qrId,
