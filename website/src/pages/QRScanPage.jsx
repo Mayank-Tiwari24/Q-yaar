@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
-const API = import.meta.env.PROD ? '' : 'http://localhost:5000'
+const API = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'https://qyaar-backend.onrender.com'
 
 export default function QRScanPage() {
   const { qrId } = useParams()

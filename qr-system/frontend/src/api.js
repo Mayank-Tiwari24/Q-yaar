@@ -31,4 +31,10 @@ export const listAllQRs = async (params = {}) => {
 // POST /api/qr/claim    → App sends: { qrId, mobileNumber, vehicleNumber, ownerName, model }
 // PUT  /api/qr/update   → App sends: { qrId, mobileNumber, vehicleNumber, ownerName, model }
 
+// ─── Notify vehicle owner (from QR scanner) ─────────────────────────────────
+export const notifyOwner = async (qrId, { message, senderName }) => {
+    const response = await api.post(`/qr/${qrId}/notify`, { message, senderName });
+    return response.data;
+};
+
 export default api;

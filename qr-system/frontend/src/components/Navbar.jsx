@@ -60,7 +60,7 @@ export default function Navbar() {
                             Get QR
                         </Link>
                     )}
-                    <a href="http://localhost:5174" style={{
+                    <a href="https://q-yaar.vercel.app" style={{
                         display: 'flex', alignItems: 'center', gap: 6,
                         padding: '8px 16px', borderRadius: 12,
                         color: '#94A3B8', fontSize: 13, fontWeight: 600,
