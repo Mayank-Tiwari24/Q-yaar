@@ -19,6 +19,10 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
+    // Production origins (always allowed)
+    'https://qyaar-qr.vercel.app',
+    'https://qyaar-admin.vercel.app',
+    'https://q-yaar.vercel.app',
     ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(url => url.trim().replace(/\/$/, '')) : []),
 ];
 
