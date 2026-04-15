@@ -3,7 +3,13 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { registerRootComponent } from 'expo';
-import { Alert } from 'react-native';
+import { Alert, LogBox } from 'react-native';
+
+// Suppress Expo Go push notification warning (only affects Expo Go, not production APK)
+LogBox.ignoreLogs([
+    'expo-notifications',
+    '`expo-notifications` functionality is not fully supported',
+]);
 import OnboardingScreen from './OnboardingScreen';
 import SelectionScreen from './SelectionScreen';
 import LoginScreen from './LoginScreen';
