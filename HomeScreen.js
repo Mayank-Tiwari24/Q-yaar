@@ -316,8 +316,8 @@ const HomeScreen = ({ route, expoPushToken }) => {
                             activeOpacity={0.7}
                             onPress={() => {
                                 if (tab.key === 'scan') navigation.navigate('Scan');
-                                if (tab.key === 'vehicles') navigation.navigate('Vehicles');
-                                if (tab.key === 'activity') navigation.navigate('Activity');
+                                if (tab.key === 'vehicles') navigation.navigate('Vehicles', { mobileNumber, userData });
+                                if (tab.key === 'activity') navigation.navigate('Activity', { mobileNumber, userData });
                                 if (tab.key === 'profile') navigation.navigate('Profile');
                             }}
                         >
