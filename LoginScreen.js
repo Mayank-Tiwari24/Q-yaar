@@ -11,7 +11,10 @@ import {
     KeyboardAvoidingView,
     ScrollView,
     Keyboard,
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
+import API_URL from './config';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
     Rect,
@@ -198,20 +201,11 @@ const isEmailValid = (value) => {
 const LoginScreen = () => {
     const navigation = useNavigation();
 
-    // Input mode: 'phone' or 'email'
+    // Input mode: 'phone' only (email login not supported yet)
     const [inputMode, setInputMode] = useState('phone');
     const [inputValue, setInputValue] = useState('');
-    const [showOtp, setShowOtp] = useState(false);
-    const [otp, setOtp] = useState(['', '', '', '']);
-    const [resendTimer, setResendTimer] = useState(0);
-
-    // OTP refs
-    const otpRefs = useRef([
-        React.createRef(),
-        React.createRef(),
-        React.createRef(),
-        React.createRef(),
-    ]).current;
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
     // Animations
     const fadeHeader = useRef(new Animated.Value(0)).current;
@@ -223,19 +217,6 @@ const LoginScreen = () => {
     const shakeAnim = useRef(new Animated.Value(0)).current;
     const buttonOpacity = useRef(new Animated.Value(0.4)).current;
     const inputBorderAnim = useRef(new Animated.Value(0)).current;
-
-    // OTP section animations
-    const otpSlide = useRef(new Animated.Value(40)).current;
-    const otpFade = useRef(new Animated.Value(0)).current;
-    const otpBoxFades = useRef([
-        new Animated.Value(0),
-        new Animated.Value(0),
-        new Animated.Value(0),
-        new Animated.Value(0),
-    ]).current;
-
-    // Resend timer
-    const resendInterval = useRef(null);
 
     // ── Validation ──
     const isValid = inputMode === 'phone' ? isPhoneValid(inputValue) : isEmailValid(inputValue);
@@ -272,10 +253,6 @@ const LoginScreen = () => {
                 Animated.timing(floatAnim, { toValue: 0, duration: 2200, useNativeDriver: true }),
             ])
         ).start();
-
-        return () => {
-            if (resendInterval.current) clearInterval(resendInterval.current);
-        };
     }, []);
 
     const iconTranslateY = floatAnim.interpolate({
@@ -327,93 +304,45 @@ const LoginScreen = () => {
         }
     };
 
-    // Handle Get OTP
-    const handleGetOtp = () => {
+    // Handle Login with mobile number
+    const handleLogin = async () => {
         if (!isValid) {
             triggerShake();
             return;
         }
 
         Keyboard.dismiss();
-        setShowOtp(true);
-        setResendTimer(30);
+        setIsLoading(true);
+        setErrorMsg('');
 
-        // Start resend countdown
-        if (resendInterval.current) clearInterval(resendInterval.current);
-        resendInterval.current = setInterval(() => {
-            setResendTimer((prev) => {
-                if (prev <= 1) {
-                    clearInterval(resendInterval.current);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+        try {
+            const response = await fetch(`${API_URL}/qr/user/${inputValue}`);
+            const data = await response.json();
 
-        // Animate OTP section
-        otpSlide.setValue(40);
-        otpFade.setValue(0);
-        otpBoxFades.forEach((a) => a.setValue(0));
-
-        Animated.sequence([
-            Animated.parallel([
-                Animated.spring(otpSlide, { toValue: 0, friction: 8, tension: 40, useNativeDriver: true }),
-                Animated.timing(otpFade, { toValue: 1, duration: 400, useNativeDriver: true }),
-            ]),
-            Animated.stagger(100, otpBoxFades.map((a) =>
-                Animated.timing(a, { toValue: 1, duration: 250, useNativeDriver: true })
-            )),
-        ]).start(() => {
-            if (otpRefs[0] && otpRefs[0].current) {
-                otpRefs[0].current.focus();
+            if (data.success && data.data.vehicles.length > 0) {
+                // User found with registered vehicles
+                navigation.reset({
+                    index: 0,
+                    routes: [{
+                        name: 'Home',
+                        params: {
+                            mobileNumber: inputValue,
+                            userData: data.data,
+                        },
+                    }],
+                });
+            } else {
+                // No vehicles found for this number
+                setErrorMsg('No account found with this number. Please register first.');
+                triggerShake();
             }
-        });
-    };
-
-    // Handle OTP input
-    const handleOtpChange = (text, index) => {
-        const newOtp = [...otp];
-        newOtp[index] = text;
-        setOtp(newOtp);
-
-        if (text && index < 3) {
-            otpRefs[index + 1].current.focus();
+        } catch (error) {
+            console.error('Login error:', error);
+            setErrorMsg('Connection error. Please try again.');
+            triggerShake();
+        } finally {
+            setIsLoading(false);
         }
-
-        if (index === 3 && text) {
-            Keyboard.dismiss();
-            const fullOtp = newOtp.join('');
-            handleVerifyOtp(fullOtp);
-        }
-    };
-
-    const handleOtpKeyPress = (e, index) => {
-        if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-            otpRefs[index - 1].current.focus();
-        }
-    };
-
-    // Verify OTP (placeholder)
-    const handleVerifyOtp = (code) => {
-        console.log('Verifying OTP:', code);
-        // navigation.navigate('Dashboard');
-    };
-
-    // Resend OTP
-    const handleResend = () => {
-        if (resendTimer > 0) return;
-        setOtp(['', '', '', '']);
-        setResendTimer(30);
-        if (resendInterval.current) clearInterval(resendInterval.current);
-        resendInterval.current = setInterval(() => {
-            setResendTimer((prev) => {
-                if (prev <= 1) {
-                    clearInterval(resendInterval.current);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
     };
 
     // Button press animations
@@ -556,7 +485,8 @@ const LoginScreen = () => {
                             activeOpacity={0.9}
                             onPressIn={handlePressIn}
                             onPressOut={handlePressOut}
-                            onPress={handleGetOtp}
+                            onPress={handleLogin}
+                            disabled={isLoading}
                         >
                             <Animated.View
                                 style={[
@@ -564,59 +494,33 @@ const LoginScreen = () => {
                                     { opacity: buttonOpacity },
                                 ]}
                             >
-                                <Text style={[
-                                    styles.getOtpText,
-                                    !isValid && styles.buttonTextDisabled,
-                                ]}>
-                                    Get OTP
-                                </Text>
+                                {isLoading ? (
+                                    <ActivityIndicator color="#073B3A" size="small" />
+                                ) : (
+                                    <Text style={[
+                                        styles.getOtpText,
+                                        !isValid && styles.buttonTextDisabled,
+                                    ]}>
+                                        Login
+                                    </Text>
+                                )}
                             </Animated.View>
                         </TouchableOpacity>
                     </Animated.View>
 
-                    {/* OTP Section */}
-                    {showOtp && (
-                        <Animated.View
-                            style={[
-                                styles.otpSection,
-                                {
-                                    opacity: otpFade,
-                                    transform: [{ translateY: otpSlide }],
-                                },
-                            ]}
-                        >
-                            <Text style={styles.otpLabel}>
-                                Enter the 4-digit OTP sent to your {inputMode === 'phone' ? 'mobile' : 'email'}.
-                            </Text>
-
-                            <View style={styles.otpRow}>
-                                {otp.map((digit, index) => (
-                                    <OtpBox
-                                        key={index}
-                                        ref={otpRefs[index]}
-                                        value={digit}
-                                        onChangeText={(text) => handleOtpChange(text, index)}
-                                        onKeyPress={(e) => handleOtpKeyPress(e, index)}
-                                        isFocused={false}
-                                        fadeAnim={otpBoxFades[index]}
-                                    />
-                                ))}
-                            </View>
-
-                            {/* Resend */}
-                            <TouchableOpacity
-                                onPress={handleResend}
-                                disabled={resendTimer > 0}
-                                style={styles.resendContainer}
-                            >
-                                <Text style={[styles.resendText, resendTimer > 0 && styles.resendDisabled]}>
-                                    {resendTimer > 0
-                                        ? `Resend OTP in ${resendTimer}s`
-                                        : 'Resend OTP'}
-                                </Text>
-                            </TouchableOpacity>
+                    {/* Error message */}
+                    {errorMsg !== '' && (
+                        <Animated.View style={[styles.errorContainer, { opacity: fadeForm }]}>
+                            <Text style={styles.errorText}>{errorMsg}</Text>
                         </Animated.View>
                     )}
+
+                    {/* Info text */}
+                    <Animated.View style={[styles.infoContainer, { opacity: fadeForm }]}>
+                        <Text style={styles.infoText}>
+                            Enter the mobile number you used while registering your QR code.
+                        </Text>
+                    </Animated.View>
                 </ScrollView>
             </KeyboardAvoidingView>
         </LinearGradient>
@@ -824,17 +728,34 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
     },
 
-    /* Resend */
-    resendContainer: {
-        marginTop: 4,
+    /* Error */
+    errorContainer: {
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.2)',
     },
-    resendText: {
-        fontSize: 14,
+    errorText: {
+        fontSize: 13,
         fontWeight: '500',
-        color: '#5EEAD4',
+        color: '#FCA5A5',
+        textAlign: 'center',
+        lineHeight: 18,
     },
-    resendDisabled: {
-        color: 'rgba(255, 255, 255, 0.3)',
+
+    /* Info */
+    infoContainer: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    infoText: {
+        fontSize: 13,
+        fontWeight: '400',
+        color: 'rgba(255, 255, 255, 0.35)',
+        textAlign: 'center',
+        lineHeight: 20,
     },
 });
 
