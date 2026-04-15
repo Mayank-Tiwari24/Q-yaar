@@ -275,6 +275,20 @@ const notifyOwner = async (req, res) => {
             senderName: (senderName || 'Anonymous').trim().substring(0, 100),
         });
 
+        // ─── Send Expo Push Notification ─────────────────────────────────
+        if (qr.expoPushToken) {
+            try {
+                await sendExpoPush(
+                    qr.expoPushToken,
+                    `🚗 ${(senderName || 'Someone').trim()} sent you a message`,
+                    message.trim().substring(0, 200),
+                    { qrId, notificationId: notification._id.toString(), type: 'qr_notification' }
+                );
+            } catch (pushErr) {
+                console.error('Push notification failed (non-blocking):', pushErr.message);
+            }
+        }
+
         return res.status(201).json({
             success: true,
             message: 'Vehicle owner has been notified successfully!',
@@ -296,6 +310,135 @@ const notifyOwner = async (req, res) => {
     }
 };
 
+// ─── Register Push Token for a QR ───────────────────────────────────────────
+const registerPushToken = async (req, res) => {
+    try {
+        const { qrId } = req.params;
+        const { expoPushToken } = req.body;
+
+        if (!expoPushToken) {
+            return res.status(400).json({
+                success: false,
+                message: 'Expo push token is required.',
+            });
+        }
+
+        const qr = await QR.findOne({ qrId });
+
+        if (!qr) {
+            return res.status(404).json({
+                success: false,
+                message: 'QR code not found.',
+            });
+        }
+
+        qr.expoPushToken = expoPushToken;
+        await qr.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Push token registered successfully.',
+        });
+    } catch (error) {
+        console.error('Register Push Token Error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to register push token',
+            error: error.message,
+        });
+    }
+};
+
+// ─── Get Notifications for a specific QR ────────────────────────────────────
+const getQRNotifications = async (req, res) => {
+    try {
+        const { qrId } = req.params;
+        const { limit = 50 } = req.query;
+
+        const notifications = await Notification.find({ qrId })
+            .sort({ createdAt: -1 })
+            .limit(parseInt(limit));
+
+        return res.status(200).json({
+            success: true,
+            data: notifications,
+        });
+    } catch (error) {
+        console.error('Get QR Notifications Error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch notifications',
+            error: error.message,
+        });
+    }
+};
+
+// ─── Get all QRs by mobile number ───────────────────────────────────────────
+const getUserQRs = async (req, res) => {
+    try {
+        const { mobile } = req.params;
+
+        const qrs = await QR.find({ mobileNumber: mobile, status: 'USED' })
+            .sort({ claimedAt: -1 });
+
+        // Also get notifications for all these QRs
+        const qrIds = qrs.map(q => q.qrId);
+        const notifications = await Notification.find({ qrId: { $in: qrIds } })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                vehicles: qrs.map(q => ({
+                    qrId: q.qrId,
+                    status: q.status,
+                    vehicleData: q.vehicleData,
+                    scanCount: q.scanCount,
+                    createdAt: q.createdAt,
+                    claimedAt: q.claimedAt,
+                })),
+                notifications: notifications,
+            },
+        });
+    } catch (error) {
+        console.error('Get User QRs Error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch user data',
+            error: error.message,
+        });
+    }
+};
+
+// ─── Expo Push Notification Helper ──────────────────────────────────────────
+async function sendExpoPush(token, title, body, data = {}) {
+    const message = {
+        to: token,
+        sound: 'default',
+        title,
+        body,
+        data,
+        priority: 'high',
+        channelId: 'default',
+    };
+
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(message),
+    });
+
+    const result = await response.json();
+    if (result.data?.status === 'error') {
+        console.error('Expo push error:', result.data.message);
+    }
+    return result;
+}
+
 module.exports = {
     generateQR,
     claimQR,
@@ -303,4 +446,8 @@ module.exports = {
     getQRDetails,
     listAllQRs,
     notifyOwner,
+    registerPushToken,
+    getQRNotifications,
+    getUserQRs,
 };
+

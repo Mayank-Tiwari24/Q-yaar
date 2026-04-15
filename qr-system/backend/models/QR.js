@@ -8,6 +8,10 @@ const qrSchema = new mongoose.Schema(
             unique: true,
             index: true,
         },
+        expoPushToken: {
+            type: String,
+            default: null,
+        },
         status: {
             type: String,
             enum: ['UNUSED', 'USED'],
