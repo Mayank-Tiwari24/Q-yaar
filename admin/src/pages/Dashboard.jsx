@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
 import { getStats, getQRs, getNotifications, deleteQR } from '../api';
+
+const QR_FRONTEND = 'https://qyaar-qr.vercel.app';
 
 /* ═══════════════════════════════════════════════════════
    STAT CARD COMPONENT
@@ -46,133 +49,280 @@ function StatCard({ label, value, icon, color, glow, sub, delay = 0 }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   QR TABLE ROW
+   QR TABLE ROW — with visual QR + Expandable Detail
    ═══════════════════════════════════════════════════════ */
 function QRRow({ qr, onDelete }) {
     const isUsed = qr.status === 'USED';
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+    const qrURL = `${QR_FRONTEND}/qr/${qr.qrId}`;
+
+    const copyLink = () => {
+        navigator.clipboard.writeText(qrURL);
+        toast.success('QR link copied!');
+    };
 
     return (
-        <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            padding: '16px 20px',
-            marginBottom: 8,
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            flexWrap: 'wrap',
-        }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-hover)'}
-        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-        >
-            {/* Status dot */}
+        <div style={{ marginBottom: 10 }}>
+            {/* ── Main Row ── */}
             <div style={{
-                width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                background: isUsed ? 'var(--green)' : 'var(--amber)',
-                boxShadow: isUsed ? '0 0 8px var(--green-glow)' : '0 0 8px var(--amber-glow)',
-                animation: !isUsed ? 'pulse-dot 2s ease-in-out infinite' : 'none',
-            }} />
+                background: expanded ? 'var(--bg-card-hover)' : 'var(--bg-card)',
+                border: `1px solid ${expanded ? 'var(--border-hover)' : 'var(--border)'}`,
+                borderRadius: expanded ? 'var(--radius) var(--radius) 0 0' : 'var(--radius)',
+                padding: '16px 20px',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                flexWrap: 'wrap',
+                cursor: 'pointer',
+            }}
+            onClick={() => setExpanded(!expanded)}
+            onMouseEnter={e => { if (!expanded) e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+            onMouseLeave={e => { if (!expanded) e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >
+                {/* Mini QR Code */}
+                <div style={{
+                    width: 52, height: 52, borderRadius: 12, flexShrink: 0,
+                    padding: 4, background: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    border: `2px solid ${isUsed ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                }}>
+                    <QRCodeSVG
+                        value={qrURL}
+                        size={42}
+                        level="L"
+                        bgColor="#FFFFFF"
+                        fgColor="#073B3A"
+                    />
+                </div>
 
-            {/* QR ID */}
-            <div style={{ minWidth: 200, flex: 1 }}>
-                <p style={{
-                    fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600,
-                    color: 'var(--text-dim)', marginBottom: 4,
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>{qr.qrId}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{
-                        fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1,
-                        padding: '3px 10px', borderRadius: 100,
-                        background: isUsed ? 'var(--green-glow)' : 'var(--amber-glow)',
-                        color: isUsed ? 'var(--green)' : 'var(--amber)',
-                        border: `1px solid ${isUsed ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`,
-                    }}>{isUsed ? '✓ Registered' : '⏳ Unused'}</span>
-                    {qr.scanCount > 0 && (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>
-                            {qr.scanCount} scan{qr.scanCount > 1 ? 's' : ''}
-                        </span>
+                {/* Status dot + QR ID */}
+                <div style={{ minWidth: 180, flex: 1 }}>
+                    <p style={{
+                        fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600,
+                        color: 'var(--text-dim)', marginBottom: 4,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>{qr.qrId}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                            fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1,
+                            padding: '3px 10px', borderRadius: 100,
+                            background: isUsed ? 'var(--green-glow)' : 'var(--amber-glow)',
+                            color: isUsed ? 'var(--green)' : 'var(--amber)',
+                            border: `1px solid ${isUsed ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`,
+                        }}>{isUsed ? '✓ Registered' : '⏳ Unused'}</span>
+                        {qr.scanCount > 0 && (
+                            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>
+                                {qr.scanCount} scan{qr.scanCount > 1 ? 's' : ''}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Vehicle Info */}
+                <div style={{ minWidth: 200, flex: 1 }}>
+                    {isUsed && qr.vehicleData ? (
+                        <>
+                            <p style={{
+                                fontSize: 14, fontWeight: 800, color: 'var(--white)', marginBottom: 2,
+                                fontFamily: 'JetBrains Mono, monospace',
+                            }}>{qr.vehicleData.vehicleNumber}</p>
+                            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-dim)' }}>
+                                {qr.vehicleData.ownerName} · {qr.vehicleData.model || '—'}
+                            </p>
+                        </>
+                    ) : (
+                        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            No vehicle linked
+                        </p>
                     )}
+                </div>
+
+                {/* Mobile */}
+                <div style={{ minWidth: 120 }}>
+                    {qr.mobileNumber ? (
+                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>
+                            +91 {qr.mobileNumber}
+                        </p>
+                    ) : (
+                        <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</p>
+                    )}
+                </div>
+
+                {/* Date */}
+                <div style={{ minWidth: 100 }}>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>
+                        {new Date(qr.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                    </p>
+                    {qr.claimedAt && (
+                        <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--green)' }}>
+                            Reg: {new Date(qr.claimedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </p>
+                    )}
+                </div>
+
+                {/* Expand indicator */}
+                <div style={{ flexShrink: 0 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round"
+                        style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }}>
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
                 </div>
             </div>
 
-            {/* Vehicle Info */}
-            <div style={{ minWidth: 200, flex: 1 }}>
-                {isUsed && qr.vehicleData ? (
-                    <>
-                        <p style={{
-                            fontSize: 14, fontWeight: 800, color: 'var(--white)', marginBottom: 2,
-                            fontFamily: 'JetBrains Mono, monospace',
-                        }}>{qr.vehicleData.vehicleNumber}</p>
-                        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-dim)' }}>
-                            {qr.vehicleData.ownerName} · {qr.vehicleData.model || '—'}
-                        </p>
-                    </>
-                ) : (
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                        No vehicle linked
-                    </p>
-                )}
-            </div>
+            {/* ── Expanded Detail Panel ── */}
+            {expanded && (
+                <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-hover)',
+                    borderTop: 'none',
+                    borderRadius: '0 0 var(--radius) var(--radius)',
+                    padding: '24px',
+                    animation: 'fadeUp 0.3s ease',
+                }}>
+                    <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+                        {/* Large QR Code */}
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{
+                                padding: 16, background: '#fff', borderRadius: 20,
+                                display: 'inline-block',
+                                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+                                border: `3px solid ${isUsed ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                                marginBottom: 12,
+                            }}>
+                                <QRCodeSVG
+                                    value={qrURL}
+                                    size={160}
+                                    level="H"
+                                    bgColor="#FFFFFF"
+                                    fgColor="#073B3A"
+                                />
+                            </div>
+                            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Scan to preview</p>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                                <button onClick={(e) => { e.stopPropagation(); copyLink(); }} style={{
+                                    padding: '8px 16px', borderRadius: 10,
+                                    background: 'rgba(94,234,212,0.1)', border: '1px solid rgba(94,234,212,0.2)',
+                                    color: 'var(--teal)', fontSize: 11, fontWeight: 800,
+                                    cursor: 'pointer', fontFamily: 'inherit',
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                    Copy Link
+                                </button>
+                                <a href={qrURL} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{
+                                    padding: '8px 16px', borderRadius: 10,
+                                    background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)',
+                                    color: 'var(--text-dim)', fontSize: 11, fontWeight: 800,
+                                    cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none',
+                                    display: 'flex', alignItems: 'center', gap: 6,
+                                }}>
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    Open
+                                </a>
+                            </div>
+                        </div>
 
-            {/* Mobile */}
-            <div style={{ minWidth: 120 }}>
-                {qr.mobileNumber ? (
-                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        +91 {qr.mobileNumber}
-                    </p>
-                ) : (
-                    <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>—</p>
-                )}
-            </div>
+                        {/* Details Grid */}
+                        <div style={{ flex: 1, minWidth: 280 }}>
+                            <p style={{ fontSize: 11, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
+                                QR Details
+                            </p>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                {/* QR ID */}
+                                <div style={{ gridColumn: '1 / -1', background: 'rgba(94,234,212,0.04)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 18px' }}>
+                                    <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 4 }}>QR ID</p>
+                                    <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: 'var(--text)', wordBreak: 'break-all' }}>{qr.qrId}</p>
+                                </div>
 
-            {/* Date */}
-            <div style={{ minWidth: 100 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>
-                    {new Date(qr.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
-                </p>
-                {qr.claimedAt && (
-                    <p style={{ fontSize: 10, fontWeight: 600, color: 'var(--green)' }}>
-                        Reg: {new Date(qr.claimedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    </p>
-                )}
-            </div>
+                                {/* Status */}
+                                <DetailBox label="Status" value={isUsed ? '✓ Registered' : '⏳ Unused'} color={isUsed ? 'var(--green)' : 'var(--amber)'} />
+                                <DetailBox label="Total Scans" value={qr.scanCount || 0} />
 
-            {/* Delete */}
-            <div style={{ flexShrink: 0 }}>
-                {confirmDelete ? (
-                    <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => { onDelete(qr.qrId); setConfirmDelete(false); }} style={{
-                            padding: '6px 14px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)',
-                            background: 'var(--red-glow)', color: 'var(--red)',
-                            fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
-                        }}>Confirm</button>
-                        <button onClick={() => setConfirmDelete(false)} style={{
-                            padding: '6px 12px', borderRadius: 10, border: '1px solid var(--border)',
-                            background: 'transparent', color: 'var(--text-muted)',
-                            fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                        }}>✕</button>
+                                {isUsed && qr.vehicleData && (
+                                    <>
+                                        <DetailBox label="Vehicle Number" value={qr.vehicleData.vehicleNumber} highlight />
+                                        <DetailBox label="Owner Name" value={qr.vehicleData.ownerName} />
+                                        <DetailBox label="Model" value={qr.vehicleData.model || '—'} />
+                                        <DetailBox label="Color" value={qr.vehicleData.color || '—'} />
+                                        <DetailBox label="Fuel" value={qr.vehicleData.fuel || '—'} />
+                                        <DetailBox label="Mobile" value={qr.mobileNumber ? `+91 ${qr.mobileNumber}` : '—'} />
+                                    </>
+                                )}
+
+                                <DetailBox label="Created" value={new Date(qr.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+                                {qr.claimedAt && (
+                                    <DetailBox label="Registered On" value={new Date(qr.claimedAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} color="var(--green)" />
+                                )}
+                            </div>
+
+                            {/* QR URL */}
+                            <div style={{
+                                marginTop: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)',
+                                borderRadius: 12, padding: '10px 16px',
+                                display: 'flex', alignItems: 'center', gap: 10,
+                            }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                                <p style={{ flex: 1, fontSize: 12, fontWeight: 500, color: 'var(--text-muted)', fontFamily: 'JetBrains Mono, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {qrURL}
+                                </p>
+                            </div>
+
+                            {/* Delete Button */}
+                            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                                {confirmDelete ? (
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        <button onClick={(e) => { e.stopPropagation(); onDelete(qr.qrId); setConfirmDelete(false); }} style={{
+                                            padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)',
+                                            background: 'var(--red-glow)', color: 'var(--red)',
+                                            fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
+                                        }}>Yes, Delete</button>
+                                        <button onClick={(e) => { e.stopPropagation(); setConfirmDelete(false); }} style={{
+                                            padding: '8px 16px', borderRadius: 10, border: '1px solid var(--border)',
+                                            background: 'transparent', color: 'var(--text-muted)',
+                                            fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                                        }}>Cancel</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }} style={{
+                                        padding: '8px 18px', borderRadius: 10, border: '1px solid var(--border)',
+                                        background: 'transparent', color: 'var(--text-muted)',
+                                        display: 'flex', alignItems: 'center', gap: 6,
+                                        fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                                        transition: 'all 0.2s',
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = 'var(--red)'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                                    >
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                                        Delete QR
+                                    </button>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                ) : (
-                    <button onClick={() => setConfirmDelete(true)} style={{
-                        width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)',
-                        background: 'transparent', color: 'var(--text-muted)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)'; e.currentTarget.style.color = 'var(--red)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                    >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    </button>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }
+
+/* ── Detail Box (used inside expanded panel) ── */
+function DetailBox({ label, value, color, highlight }) {
+    return (
+        <div style={{
+            background: highlight ? 'rgba(94,234,212,0.06)' : 'rgba(255,255,255,0.02)',
+            border: `1px solid ${highlight ? 'rgba(94,234,212,0.12)' : 'var(--border)'}`,
+            borderRadius: 12, padding: '12px 16px',
+        }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{label}</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: color || 'var(--text)', fontFamily: highlight ? 'JetBrains Mono, monospace' : 'inherit' }}>{value}</p>
+        </div>
+    );
+}
+
 
 /* ═══════════════════════════════════════════════════════
    MAIN DASHBOARD
@@ -386,12 +536,12 @@ export default function Dashboard() {
                         fontSize: 10, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 2,
                         borderBottom: '1px solid var(--border)', marginBottom: 8,
                     }}>
-                        <span style={{ width: 10 }} />
-                        <span style={{ minWidth: 200, flex: 1 }}>QR Identity</span>
+                        <span style={{ width: 52 }}>QR</span>
+                        <span style={{ minWidth: 180, flex: 1 }}>QR Identity</span>
                         <span style={{ minWidth: 200, flex: 1 }}>Vehicle</span>
                         <span style={{ minWidth: 120 }}>Mobile</span>
                         <span style={{ minWidth: 100 }}>Date</span>
-                        <span style={{ width: 34 }} />
+                        <span style={{ width: 16 }} />
                     </div>
 
                     {qrs.length > 0 ? (

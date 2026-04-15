@@ -78,6 +78,10 @@ body {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .anim-fade-up { animation: fadeInUp 0.5s ease-out forwards; }
 .anim-fade-in { animation: fadeIn 0.3s ease-out forwards; }
