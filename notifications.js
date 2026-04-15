@@ -31,29 +31,29 @@ if (Platform.OS === 'android') {
 export async function registerForPushNotifications() {
     let token = null;
 
-    // Push notifications only work on physical devices
-    if (!Device.isDevice) {
-        console.log('Push notifications require a physical device');
-        return null;
-    }
-
-    // Check existing permissions
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    // Ask for permission if not granted
-    if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-        console.log('Push notification permission not granted');
-        return null;
-    }
-
-    // Get the Expo push token
     try {
+        // Push notifications only work on physical devices with dev builds
+        if (!Device.isDevice) {
+            console.log('Push notifications require a physical device');
+            return null;
+        }
+
+        // Check existing permissions
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+
+        // Ask for permission if not granted
+        if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+        }
+
+        if (finalStatus !== 'granted') {
+            console.log('Push notification permission not granted');
+            return null;
+        }
+
+        // Get the Expo push token
         const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
         const pushToken = await Notifications.getExpoPushTokenAsync({
             projectId,
@@ -61,7 +61,9 @@ export async function registerForPushNotifications() {
         token = pushToken.data;
         console.log('Expo Push Token:', token);
     } catch (error) {
-        console.error('Error getting push token:', error);
+        // This will happen in Expo Go (SDK 53+) — push notifications need a dev build
+        console.log('Push notifications not available (Expo Go limitation):', error.message);
+        console.log('Push notifications will work once you build a development/production APK.');
     }
 
     return token;
