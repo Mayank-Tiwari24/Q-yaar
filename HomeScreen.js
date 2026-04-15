@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -51,10 +51,22 @@ const REMINDERS = [
     { icon: 'eco', title: 'PUC expires in 35 days', sub: 'Next test: Nov 08', bg: '#fff1f0', color: '#cf1322' },
 ];
 
-const ACTIVITIES = [
-    { icon: 'qr-code-2', title: 'QR scanned • Today', sub: '4:30 PM • Main Parking Entrance' },
-    { icon: 'history', title: 'QR viewed • Yesterday', sub: '9:10 PM • Profile Access' },
-];
+const ACTIVITIES = [];
+
+// ─── Time Formatter ─────────────────────────────────────────────────────────
+const formatTime = (dateStr) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays}d ago`;
+};
 
 const NAV_TABS = [
     { icon: 'home', label: 'Home', key: 'home' },
@@ -73,8 +85,23 @@ const getGreeting = () => {
 };
 
 // ─── HomeScreen ─────────────────────────────────────────────────────────────
-const HomeScreen = () => {
+const HomeScreen = ({ route, expoPushToken }) => {
     const navigation = useNavigation();
+    const userData = route?.params?.userData || null;
+    const mobileNumber = route?.params?.mobileNumber || '';
+
+    // Get user's name from first vehicle data
+    const ownerName = userData?.vehicles?.[0]?.vehicleData?.ownerName || 'User';
+    const firstName = ownerName.split(' ')[0];
+    const firstVehicle = userData?.vehicles?.[0]?.vehicleData?.vehicleNumber || '';
+
+    // Real notifications from backend
+    const recentNotifications = (userData?.notifications || []).slice(0, 3).map(n => ({
+        icon: 'message',
+        title: `${n.senderName || 'Someone'} sent a message`,
+        sub: `${formatTime(n.createdAt)} • ${n.message?.substring(0, 40)}${n.message?.length > 40 ? '...' : ''}`,
+    }));
+    const notifCount = userData?.notifications?.length || 0;
 
     // Animations
     const fadeHeader = useRef(new Animated.Value(0)).current;
@@ -134,17 +161,22 @@ const HomeScreen = () => {
             <Animated.View style={[styles.header, { opacity: fadeHeader }]}>
                 <View style={styles.headerLeft}>
                     <LinearGradient colors={[C.primaryContainer, '#5AD4C4']} style={styles.avatar}>
-                        <Text style={styles.avatarText}>M</Text>
+                        <Text style={styles.avatarText}>{firstName.charAt(0).toUpperCase()}</Text>
                     </LinearGradient>
                     <View>
-                        <Text style={styles.greeting}>{getGreeting()}, Mayank 👋</Text>
+                        <Text style={styles.greeting}>{getGreeting()}, {firstName} 👋</Text>
                         <Text style={styles.vehicleInfo}>
-                            KA 01 MJ 1234 • <Text style={styles.activeStatus}>Active</Text>
+                            {firstVehicle || 'No vehicle'} • <Text style={styles.activeStatus}>Active</Text>
                         </Text>
                     </View>
                 </View>
-                <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.notifBtn} activeOpacity={0.7} onPress={() => navigation.navigate('Activity', { mobileNumber, userData })}>
                     <MaterialIcons name="notifications" size={24} color={C.primary} />
+                    {notifCount > 0 && (
+                        <View style={styles.notifBadge}>
+                            <Text style={styles.notifBadgeText}>{notifCount > 9 ? '9+' : notifCount}</Text>
+                        </View>
+                    )}
                 </TouchableOpacity>
             </Animated.View>
 
@@ -218,15 +250,14 @@ const HomeScreen = () => {
                     </View>
                 </Animated.View>
 
-                {/* Recent Activity */}
                 <Animated.View style={{ opacity: fadeActivity, transform: [{ translateY: slideActivity }] }}>
                     <View style={styles.activityHead}>
                         <Text style={styles.activityTitle}>Recent Activity</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('Activity', { mobileNumber, userData })}>
                             <Text style={styles.viewAll}>View All</Text>
                         </TouchableOpacity>
                     </View>
-                    {ACTIVITIES.map((a, i) => (
+                    {recentNotifications.length > 0 ? recentNotifications.map((a, i) => (
                         <View key={i} style={styles.activityRow}>
                             <View style={styles.activityIcon}>
                                 <MaterialIcons name={a.icon} size={20} color={C.onSurfaceVar} />
@@ -236,7 +267,13 @@ const HomeScreen = () => {
                                 <Text style={styles.activityItemSub}>{a.sub}</Text>
                             </View>
                         </View>
-                    ))}
+                    )) : (
+                        <View style={styles.emptyActivity}>
+                            <MaterialIcons name="notifications-none" size={32} color={C.outlineVar} />
+                            <Text style={styles.emptyActivityText}>No notifications yet</Text>
+                            <Text style={styles.emptyActivitySub}>When someone scans your QR and sends a message, it'll show up here</Text>
+                        </View>
+                    )}
                 </Animated.View>
 
                 {/* QR Access Card */}
@@ -356,6 +393,23 @@ const styles = StyleSheet.create({
         borderRadius: 21,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    notifBadge: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        backgroundColor: '#EF4444',
+        borderRadius: 10,
+        minWidth: 18,
+        height: 18,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+    },
+    notifBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#fff',
     },
 
     /* Scroll */
@@ -607,6 +661,29 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         color: C.onSecondaryContainer,
+    },
+
+    /* Empty Activity */
+    emptyActivity: {
+        alignItems: 'center',
+        paddingVertical: 28,
+        paddingHorizontal: 20,
+        backgroundColor: C.surfaceLowest,
+        borderRadius: 18,
+        marginTop: 8,
+    },
+    emptyActivityText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: C.onSurfaceVar,
+        marginTop: 10,
+    },
+    emptyActivitySub: {
+        fontSize: 12,
+        color: C.outlineVar,
+        textAlign: 'center',
+        marginTop: 4,
+        lineHeight: 18,
     },
 
     /* Bottom Nav */

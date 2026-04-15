@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -8,10 +8,13 @@ import {
     Dimensions,
     Platform,
     ScrollView,
+    RefreshControl,
+    ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import API_URL from './config';
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
 const C = {
@@ -36,66 +39,102 @@ const NAV_TABS = [
     { icon: 'person', label: 'Profile', key: 'profile' },
 ];
 
-// ─── Demo Data ──────────────────────────────────────────────────────────────
-const ACTIVITY_DATA = [
-    {
-        title: 'Today',
-        data: [
-            {
-                id: '1',
-                icon: 'qr-code-scanner',
-                title: 'QR Scanned',
-                description: 'Someone viewed your vehicle QR',
-                time: '4:32 PM',
-                bgColor: '#E6F8F5',
-                iconColor: '#2C8E7C',
-            },
-            {
-                id: '2',
-                icon: 'visibility',
-                title: 'QR Viewed',
-                description: 'You opened your vehicle QR',
-                time: '2:10 PM',
-                bgColor: '#F0F5F4',
-                iconColor: '#596061',
-            },
-        ],
-    },
-    {
-        title: 'Yesterday',
-        data: [
-            {
-                id: '3',
-                icon: 'directions-car',
-                title: 'Vehicle Added',
-                description: 'New vehicle “Honda City” added',
-                time: '6:45 PM',
-                bgColor: '#E8F5E9',
-                iconColor: '#2E7D32',
-            },
-            {
-                id: '4',
-                icon: 'person',
-                title: 'Profile Updated',
-                description: 'You updated your details',
-                time: '10:15 AM',
-                bgColor: '#E3F2FD',
-                iconColor: '#1565C0',
-            },
-        ],
-    },
-];
+// ─── Time Helpers ───────────────────────────────────────────────────────────
+const formatTime = (dateStr) => {
+    const d = new Date(dateStr);
+    const hours = d.getHours();
+    const mins = d.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const h = hours % 12 || 12;
+    return `${h}:${mins} ${ampm}`;
+};
+
+const getDateGroup = (dateStr) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const notifDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.floor((today - notifDate) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return 'Earlier';
+};
+
+const groupNotifications = (notifications) => {
+    const groups = {};
+    notifications.forEach(n => {
+        const group = getDateGroup(n.createdAt);
+        if (!groups[group]) groups[group] = [];
+        groups[group].push({
+            id: n._id,
+            icon: 'message',
+            title: `${n.senderName || 'Someone'} sent a message`,
+            description: n.message,
+            time: formatTime(n.createdAt),
+            bgColor: '#E6F8F5',
+            iconColor: '#2C8E7C',
+        });
+    });
+    const order = ['Today', 'Yesterday', 'Earlier'];
+    return order
+        .filter(key => groups[key])
+        .map(key => ({ title: key, data: groups[key] }));
+};
 
 // ─── ActivityScreen ─────────────────────────────────────────────────────────
-const ActivityScreen = () => {
+const ActivityScreen = ({ route }) => {
     const navigation = useNavigation();
-    const [activities] = useState(ACTIVITY_DATA);
+    const userData = route?.params?.userData || null;
+    const mobileNumber = route?.params?.mobileNumber || '';
+
+    const [activities, setActivities] = useState([]);
+    const [refreshing, setRefreshing] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Animations
     const fadeHeader = useRef(new Animated.Value(0)).current;
     const fadeNav = useRef(new Animated.Value(0)).current;
     const listAnim = useRef(new Animated.Value(0)).current;
     const listSlide = useRef(new Animated.Value(40)).current;
+
+    // Fetch notifications from backend
+    const fetchNotifications = useCallback(async () => {
+        if (!mobileNumber) {
+            // Use initial data from params
+            if (userData?.notifications?.length > 0) {
+                setActivities(groupNotifications(userData.notifications));
+            }
+            setLoading(false);
+            return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/qr/user/${mobileNumber}`);
+            const data = await res.json();
+            if (data.success && data.data.notifications.length > 0) {
+                setActivities(groupNotifications(data.data.notifications));
+            } else {
+                setActivities([]);
+            }
+        } catch (err) {
+            console.error('Fetch notifications error:', err);
+            // Fallback to initial data
+            if (userData?.notifications?.length > 0) {
+                setActivities(groupNotifications(userData.notifications));
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [mobileNumber]);
+
+    useEffect(() => {
+        fetchNotifications();
+    }, [fetchNotifications]);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await fetchNotifications();
+        setRefreshing(false);
+    }, [fetchNotifications]);
 
     useEffect(() => {
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
@@ -116,9 +155,11 @@ const ActivityScreen = () => {
     // ─── Empty State ────────────────────────────────────────────────────────
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>👀</Text>
-            <Text style={styles.emptyTitle}>Nothing here yet</Text>
-            <Text style={styles.emptySub}>Your activity will appear here</Text>
+            <MaterialIcons name="notifications-none" size={48} color={C.outlineVar} />
+            <Text style={styles.emptyTitle}>No notifications yet</Text>
+            <Text style={styles.emptySub}>
+                When someone scans your QR and sends a message, it will show up here.
+            </Text>
         </View>
     );
 
@@ -138,7 +179,7 @@ const ActivityScreen = () => {
                                     </View>
                                     <View style={styles.itemInfo}>
                                         <Text style={styles.itemTitle}>{item.title}</Text>
-                                        <Text style={styles.itemDesc} numberOfLines={1}>{item.description}</Text>
+                                        <Text style={styles.itemDesc} numberOfLines={2}>{item.description}</Text>
                                     </View>
                                     <Text style={styles.itemTime}>{item.time}</Text>
                                 </View>
@@ -160,22 +201,31 @@ const ActivityScreen = () => {
                 <TouchableOpacity style={styles.headerBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
                     <MaterialIcons name="arrow-back" size={24} color={C.onSurface} />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Activity</Text>
-                <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7}>
-                    <MaterialIcons name="tune" size={24} color={C.onSurface} />
+                <Text style={styles.headerTitle}>Notifications</Text>
+                <TouchableOpacity style={styles.headerBtn} activeOpacity={0.7} onPress={onRefresh}>
+                    <MaterialIcons name="refresh" size={24} color={C.onSurface} />
                 </TouchableOpacity>
             </Animated.View>
 
             {/* ── Content ── */}
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={C.primary} />
+                </View>
+            ) : (
             <Animated.ScrollView
                 contentContainerStyle={styles.scroll}
                 showsVerticalScrollIndicator={false}
                 bounces={true}
                 style={{ opacity: listAnim, transform: [{ translateY: listSlide }] }}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.primary} colors={[C.primary]} />
+                }
             >
                 {activities.length === 0 ? renderEmpty() : renderContent()}
                 <View style={{ height: 120 }} />
             </Animated.ScrollView>
+            )}
 
             {/* ── Bottom Navigation ── */}
             <Animated.View style={[styles.bottomNav, { opacity: fadeNav }]}>
@@ -209,6 +259,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: C.bg,
+    },
+    loadingContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 
     /* Header */
