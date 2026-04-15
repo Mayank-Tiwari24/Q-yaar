@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
     View,
     Text,
@@ -8,11 +8,13 @@ import {
     Dimensions,
     Platform,
     ScrollView,
+    ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import API_URL from './config';
 
 const { width } = Dimensions.get('window');
 
@@ -35,24 +37,6 @@ const C = {
     onTertiaryContainer: '#00314f',
 };
 
-// ─── Demo Vehicle Data ──────────────────────────────────────────────────────
-const VEHICLES = [
-    {
-        id: '1',
-        number: 'KA 01 MJ 1234',
-        model: 'Honda City',
-        status: 'Active',
-        type: 'car',
-    },
-    {
-        id: '2',
-        number: 'MP 04 AB 5678',
-        model: 'Royal Enfield Classic',
-        status: 'Active',
-        type: 'motorcycle',
-    },
-];
-
 // ─── Bottom Nav ─────────────────────────────────────────────────────────────
 const NAV_TABS = [
     { icon: 'home', label: 'Home', key: 'home' },
@@ -63,17 +47,37 @@ const NAV_TABS = [
 ];
 
 // ─── VehiclesScreen ─────────────────────────────────────────────────────────
-const VehiclesScreen = () => {
+const VehiclesScreen = ({ route }) => {
     const navigation = useNavigation();
-    const [vehicles] = useState(VEHICLES);
+    const userData = route?.params?.userData || null;
+    const mobileNumber = route?.params?.mobileNumber || '';
+
+    // Transform backend data to vehicle cards
+    const vehicles = useMemo(() => {
+        if (!userData?.vehicles?.length) return [];
+        return userData.vehicles.map((v, i) => ({
+            id: v.qrId,
+            number: v.vehicleData?.vehicleNumber || 'Unknown',
+            model: v.vehicleData?.model || 'Not Specified',
+            owner: v.vehicleData?.ownerName || 'Unknown',
+            color: v.vehicleData?.color || null,
+            fuel: v.vehicleData?.fuel || null,
+            status: v.status === 'USED' ? 'Active' : 'Inactive',
+            scanCount: v.scanCount || 0,
+            type: 'car', // default, can be enhanced later
+            claimedAt: v.claimedAt,
+        }));
+    }, [userData]);
 
     // Animations
     const fadeHeader = useRef(new Animated.Value(0)).current;
     const fadeNav = useRef(new Animated.Value(0)).current;
-    const cardAnims = useRef(VEHICLES.map(() => ({
-        opacity: new Animated.Value(0),
-        slide: new Animated.Value(40),
-    }))).current;
+    const cardAnims = useRef(
+        Array.from({ length: Math.max(vehicles.length, 1) }, () => ({
+            opacity: new Animated.Value(0),
+            slide: new Animated.Value(40),
+        }))
+    ).current;
     const fadeFab = useRef(new Animated.Value(0)).current;
     const scaleFab = useRef(new Animated.Value(0.5)).current;
 
@@ -82,7 +86,7 @@ const VehiclesScreen = () => {
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
 
         // Stagger cards
-        const cardSequence = cardAnims.map((anim, i) =>
+        const cardSequence = cardAnims.slice(0, vehicles.length).map((anim, i) =>
             Animated.parallel([
                 Animated.timing(anim.opacity, { toValue: 1, duration: 400, delay: i * 120, useNativeDriver: true }),
                 Animated.spring(anim.slide, { toValue: 0, friction: 8, delay: i * 120, useNativeDriver: true }),
@@ -103,7 +107,7 @@ const VehiclesScreen = () => {
     const handleNavTab = (key) => {
         if (key === 'home') navigation.navigate('Home');
         if (key === 'scan') navigation.navigate('Scan');
-        if (key === 'activity') navigation.navigate('Activity');
+        if (key === 'activity') navigation.navigate('Activity', { mobileNumber, userData });
         if (key === 'profile') navigation.navigate('Profile');
     };
 
@@ -124,7 +128,7 @@ const VehiclesScreen = () => {
 
     // ─── Vehicle Card ───────────────────────────────────────────────────
     const renderCard = (vehicle, index) => {
-        const anim = cardAnims[index];
+        const anim = cardAnims[index] || { opacity: new Animated.Value(1), slide: new Animated.Value(0) };
         const iconName = vehicle.type === 'motorcycle' ? 'two-wheeler' : 'directions-car';
 
         return (
@@ -143,12 +147,32 @@ const VehiclesScreen = () => {
                         </View>
                         <View style={styles.cardInfo}>
                             <Text style={styles.cardNumber}>{vehicle.number}</Text>
-                            <Text style={styles.cardModel}>{vehicle.model}</Text>
+                            <Text style={styles.cardModel}>{vehicle.model} • {vehicle.owner}</Text>
                         </View>
                         <View style={styles.statusBadge}>
                             <View style={styles.statusDot} />
                             <Text style={styles.statusText}>{vehicle.status}</Text>
                         </View>
+                    </View>
+
+                    {/* Stats Row */}
+                    <View style={styles.statsRow}>
+                        <View style={styles.statItem}>
+                            <MaterialIcons name="qr-code-scanner" size={14} color={C.onSurfaceVar} />
+                            <Text style={styles.statText}>{vehicle.scanCount} scans</Text>
+                        </View>
+                        {vehicle.color && (
+                            <View style={styles.statItem}>
+                                <MaterialIcons name="palette" size={14} color={C.onSurfaceVar} />
+                                <Text style={styles.statText}>{vehicle.color}</Text>
+                            </View>
+                        )}
+                        {vehicle.fuel && (
+                            <View style={styles.statItem}>
+                                <MaterialIcons name="local-gas-station" size={14} color={C.onSurfaceVar} />
+                                <Text style={styles.statText}>{vehicle.fuel}</Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* Divider */}
@@ -357,6 +381,25 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         color: '#1B8A3A',
+    },
+
+    /* Stats Row */
+    statsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        marginTop: 12,
+        paddingLeft: 64,
+    },
+    statItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    statText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: C.onSurfaceVar,
     },
 
     /* Divider */
