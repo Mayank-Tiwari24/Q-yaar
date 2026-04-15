@@ -434,38 +434,39 @@ const LoginScreen = () => {
                     </Animated.View>
 
                     {/* Input field with animated border */}
-                    <Animated.View
-                        style={[
-                            styles.inputContainer,
-                            {
-                                opacity: fadeForm,
-                                borderColor: inputBorderColor,
-                            },
-                        ]}
-                    >
-                        <View style={styles.inputIconWrapper}>
-                            {inputMode === 'phone' ? <PhoneSmallIcon /> : <EmailSmallIcon />}
-                        </View>
-                        <TextInput
-                            style={styles.input}
-                            placeholder={inputMode === 'phone' ? 'Enter Mobile Number' : 'Enter Email Address'}
-                            placeholderTextColor="rgba(255,255,255,0.3)"
-                            value={inputValue}
-                            onChangeText={handleInputChange}
-                            keyboardType={inputMode === 'phone' ? 'phone-pad' : 'email-address'}
-                            autoCapitalize="none"
-                            selectionColor="#5EEAD4"
-                            maxLength={inputMode === 'phone' ? 10 : undefined}
-                        />
-                        {/* Digit counter for phone */}
-                        {inputMode === 'phone' && inputValue.length > 0 && (
-                            <Text style={[
-                                styles.digitCounter,
-                                isValid && styles.digitCounterValid,
-                            ]}>
-                                {inputValue.length}/10
-                            </Text>
-                        )}
+                    <Animated.View style={{ opacity: fadeForm }}>
+                        <Animated.View
+                            style={[
+                                styles.inputContainer,
+                                {
+                                    borderColor: inputBorderColor,
+                                },
+                            ]}
+                        >
+                            <View style={styles.inputIconWrapper}>
+                                {inputMode === 'phone' ? <PhoneSmallIcon /> : <EmailSmallIcon />}
+                            </View>
+                            <TextInput
+                                style={styles.input}
+                                placeholder={inputMode === 'phone' ? 'Enter Mobile Number' : 'Enter Email Address'}
+                                placeholderTextColor="rgba(255,255,255,0.3)"
+                                value={inputValue}
+                                onChangeText={handleInputChange}
+                                keyboardType={inputMode === 'phone' ? 'phone-pad' : 'email-address'}
+                                autoCapitalize="none"
+                                selectionColor="#5EEAD4"
+                                maxLength={inputMode === 'phone' ? 10 : undefined}
+                            />
+                            {/* Digit counter for phone */}
+                            {inputMode === 'phone' && inputValue.length > 0 && (
+                                <Text style={[
+                                    styles.digitCounter,
+                                    isValid && styles.digitCounterValid,
+                                ]}>
+                                    {inputValue.length}/10
+                                </Text>
+                            )}
+                        </Animated.View>
                     </Animated.View>
 
                     {/* Get OTP Button with shake + animated opacity */}
