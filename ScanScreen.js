@@ -7,12 +7,14 @@ import {
     Animated,
     Dimensions,
     Platform,
+    Alert,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import API_URL from './config';
 
 const { width } = Dimensions.get('window');
 const SCANNER_SIZE = width - 80;
@@ -39,7 +41,7 @@ const NAV_TABS = [
     { icon: 'home', label: 'Home', key: 'home' },
     { icon: 'qr-code-scanner', label: 'Scan', key: 'scan' },
     { icon: 'directions-car', label: 'Vehicles', key: 'vehicles' },
-    { icon: 'history', label: 'Activity', key: 'activity' },
+    { icon: 'chat', label: 'Chats', key: 'chats' },
     { icon: 'person', label: 'Profile', key: 'profile' },
 ];
 
@@ -52,11 +54,13 @@ const ScannerCorner = ({ style }) => (
 );
 
 // ─── ScanScreen ─────────────────────────────────────────────────────────────
-const ScanScreen = () => {
+const ScanScreen = ({ route }) => {
     const navigation = useNavigation();
+    const mobileNumber = route?.params?.mobileNumber || '';
     const [permission, requestPermission] = useCameraPermissions();
     const [flashOn, setFlashOn] = useState(false);
     const [scanned, setScanned] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // Animations
     const fadeIn = useRef(new Animated.Value(0)).current;
@@ -109,23 +113,70 @@ const ScanScreen = () => {
         outputRange: [0, SCANNER_SIZE - 4],
     });
 
-    const handleBarcodeScanned = (result) => {
-        if (scanned) return;
+    const handleBarcodeScanned = async (result) => {
+        if (scanned || loading) return;
         setScanned(true);
-        console.log('QR Scanned:', result.data);
-        // Navigate or show result
+        setLoading(true);
+        const qrData = result.data;
+        console.log('QR Scanned:', qrData);
+
+        // Extract qrId — could be a full URL or just UUID
+        let qrId = qrData;
+        // If it's a URL like https://qyaar-qr.vercel.app/scan/UUID, extract UUID
+        if (qrData.includes('/scan/')) {
+            qrId = qrData.split('/scan/').pop();
+        } else if (qrData.includes('/')) {
+            // Other URL format, take last segment
+            qrId = qrData.split('/').pop();
+        }
+        qrId = qrId.trim();
+
+        if (!mobileNumber) {
+            Alert.alert('Error', 'Please login first to use chat feature.');
+            setLoading(false);
+            setScanned(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/chat/initiate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ qrId, scannerMobile: mobileNumber }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                navigation.navigate('Chat', {
+                    sessionId: data.data.sessionId,
+                    mobileNumber,
+                    ownerName: data.data.ownerName,
+                    vehicleNumber: data.data.vehicleNumber,
+                    role: 'scanner',
+                });
+            } else {
+                Alert.alert('Chat Error', data.message || 'Unable to start chat.');
+                setScanned(false);
+            }
+        } catch (err) {
+            console.error('Chat initiate error:', err);
+            Alert.alert('Connection Error', 'Could not connect to server. Please try again.');
+            setScanned(false);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSimulateScan = () => {
-        if (scanned) return;
-        setScanned(true);
-        console.log('QR Simulated');
+        if (scanned || loading) return;
+        // Simulate with a test QR ID — replace with a real one for testing
+        handleBarcodeScanned({ data: 'test-qr-id' });
     };
 
     const handleNavTab = (key) => {
         if (key === 'home') navigation.navigate('Home');
         if (key === 'vehicles') navigation.navigate('Vehicles');
-        if (key === 'activity') navigation.navigate('Activity');
+        if (key === 'chats') navigation.navigate('ChatList');
         if (key === 'profile') navigation.navigate('Profile');
     };
 

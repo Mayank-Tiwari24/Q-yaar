@@ -42,7 +42,7 @@ const NAV_TABS = [
     { icon: 'home', label: 'Home', key: 'home' },
     { icon: 'qr-code-scanner', label: 'Scan', key: 'scan' },
     { icon: 'directions-car', label: 'Vehicles', key: 'vehicles' },
-    { icon: 'history', label: 'Activity', key: 'activity' },
+    { icon: 'chat', label: 'Chats', key: 'chats' },
     { icon: 'person', label: 'Profile', key: 'profile' },
 ];
 
@@ -107,7 +107,7 @@ const VehiclesScreen = ({ route }) => {
     const handleNavTab = (key) => {
         if (key === 'home') navigation.navigate('Home');
         if (key === 'scan') navigation.navigate('Scan');
-        if (key === 'activity') navigation.navigate('Activity', { mobileNumber, userData });
+        if (key === 'chats') navigation.navigate('ChatList');
         if (key === 'profile') navigation.navigate('Profile');
     };
 

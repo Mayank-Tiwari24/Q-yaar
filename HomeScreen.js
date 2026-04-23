@@ -72,7 +72,7 @@ const NAV_TABS = [
     { icon: 'home', label: 'Home', key: 'home' },
     { icon: 'qr-code-scanner', label: 'Scan', key: 'scan' },
     { icon: 'directions-car', label: 'Vehicles', key: 'vehicles' },
-    { icon: 'history', label: 'Activity', key: 'activity' },
+    { icon: 'chat', label: 'Chats', key: 'chats' },
     { icon: 'person', label: 'Profile', key: 'profile' },
 ];
 
@@ -218,7 +218,7 @@ const HomeScreen = ({ route, expoPushToken }) => {
                     <Text style={styles.sectionTitle}>Quick Actions</Text>
                     <View style={styles.actionsGrid}>
                         {QUICK_ACTIONS.map((a, i) => (
-                            <TouchableOpacity key={i} style={styles.actionCard} activeOpacity={0.7} onPress={() => a.nav && navigation.navigate(a.nav)}>
+                            <TouchableOpacity key={i} style={styles.actionCard} activeOpacity={0.7} onPress={() => a.nav && navigation.navigate(a.nav, a.nav === 'Scan' ? { mobileNumber } : undefined)}>
                                 <View style={[styles.actionIcon, { backgroundColor: a.bg }]}>
                                     <MaterialIcons name={a.icon} size={24} color={a.color} />
                                 </View>
@@ -315,9 +315,9 @@ const HomeScreen = ({ route, expoPushToken }) => {
                             style={[styles.navTab, isActive && styles.navTabActive]}
                             activeOpacity={0.7}
                             onPress={() => {
-                                if (tab.key === 'scan') navigation.navigate('Scan');
+                                if (tab.key === 'scan') navigation.navigate('Scan', { mobileNumber });
                                 if (tab.key === 'vehicles') navigation.navigate('Vehicles', { mobileNumber, userData });
-                                if (tab.key === 'activity') navigation.navigate('Activity', { mobileNumber, userData });
+                                if (tab.key === 'chats') navigation.navigate('ChatList', { mobileNumber });
                                 if (tab.key === 'profile') navigation.navigate('Profile');
                             }}
                         >
