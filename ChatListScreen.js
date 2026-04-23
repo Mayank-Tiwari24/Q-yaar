@@ -15,6 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import API_URL from './config';
+import { useUser } from './UserContext';
 
 const { width } = Dimensions.get('window');
 
@@ -60,7 +61,8 @@ const formatTime = (dateStr) => {
 // ─── ChatListScreen ─────────────────────────────────────────────────────────
 const ChatListScreen = ({ route }) => {
     const navigation = useNavigation();
-    const mobileNumber = route?.params?.mobileNumber || '';
+    const { mobileNumber: ctxMobile } = useUser();
+    const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
 
     const [chats, setChats] = useState([]);
     const [loading, setLoading] = useState(true);

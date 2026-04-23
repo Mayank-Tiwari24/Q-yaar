@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from './UserContext';
 
 const { width } = Dimensions.get('window');
 
@@ -87,8 +88,24 @@ const getGreeting = () => {
 // ─── HomeScreen ─────────────────────────────────────────────────────────────
 const HomeScreen = ({ route, expoPushToken }) => {
     const navigation = useNavigation();
-    const userData = route?.params?.userData || null;
-    const mobileNumber = route?.params?.mobileNumber || '';
+    const { userData: ctxUserData, mobileNumber: ctxMobile, loginUser, updateUserData } = useUser();
+
+    // On first load from Login, store data in context
+    const routeUserData = route?.params?.userData || null;
+    const routeMobile = route?.params?.mobileNumber || '';
+
+    // Use context data, fallback to route params
+    const userData = ctxUserData || routeUserData;
+    const mobileNumber = ctxMobile || routeMobile;
+
+    // Store in context if we got new data from route
+    React.useEffect(() => {
+        if (routeMobile && routeUserData && !ctxMobile) {
+            loginUser(routeMobile, routeUserData);
+        } else if (routeUserData && routeUserData !== ctxUserData) {
+            updateUserData(routeUserData);
+        }
+    }, [routeMobile, routeUserData]);
 
     // Get user's name from first vehicle data
     const ownerName = userData?.vehicles?.[0]?.vehicleData?.ownerName || 'User';

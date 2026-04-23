@@ -24,6 +24,7 @@ import SearchVehicleScreen from './SearchVehicleScreen';
 import MyQRScreen from './MyQRScreen';
 import ChatListScreen from './ChatListScreen';
 import ChatScreen from './ChatScreen';
+import { UserProvider } from './UserContext';
 import {
     registerForPushNotifications,
     addNotificationReceivedListener,
@@ -71,6 +72,7 @@ function App() {
     }, []);
 
     return (
+        <UserProvider>
         <NavigationContainer ref={navigationRef}>
             <StatusBar style="light" />
             <Stack.Navigator
@@ -102,6 +104,7 @@ function App() {
                 <Stack.Screen name="Chat" component={ChatScreen} />
             </Stack.Navigator>
         </NavigationContainer>
+        </UserProvider>
     );
 }
 

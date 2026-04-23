@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from './UserContext';
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
 const C = {
@@ -43,6 +44,12 @@ const NAV_TABS = [
 // ─── ProfileScreen ──────────────────────────────────────────────────────────
 const ProfileScreen = () => {
     const navigation = useNavigation();
+    const { userData, mobileNumber, logoutUser } = useUser();
+
+    // Get user info from context
+    const ownerName = userData?.vehicles?.[0]?.vehicleData?.ownerName || 'User';
+    const initials = ownerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const vehicleCount = userData?.vehicles?.length || 0;
 
     // Animations
     const fadeHeader = useRef(new Animated.Value(0)).current;
@@ -67,8 +74,8 @@ const ProfileScreen = () => {
     };
 
     const handleLogout = () => {
-        // Simple navigation reset to Onboarding/Selection
-        navigation.reset({ index: 0, routes: [{ name: 'Selection' }] });
+        logoutUser();
+        navigation.reset({ index: 0, routes: [{ name: 'AccountSelection' }] });
     };
 
     // ─── Render Helpers ─────────────────────────────────────────────────────

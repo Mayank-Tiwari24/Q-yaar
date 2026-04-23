@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import API_URL from './config';
+import { useUser } from './UserContext';
 
 const { width } = Dimensions.get('window');
 const SCANNER_SIZE = width - 80;
@@ -56,7 +57,8 @@ const ScannerCorner = ({ style }) => (
 // ─── ScanScreen ─────────────────────────────────────────────────────────────
 const ScanScreen = ({ route }) => {
     const navigation = useNavigation();
-    const mobileNumber = route?.params?.mobileNumber || '';
+    const { mobileNumber: ctxMobile } = useUser();
+    const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
     const [permission, requestPermission] = useCameraPermissions();
     const [flashOn, setFlashOn] = useState(false);
     const [scanned, setScanned] = useState(false);
