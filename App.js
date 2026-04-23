@@ -22,6 +22,7 @@ import ActivityScreen from './ActivityScreen';
 import ProfileScreen from './ProfileScreen';
 import SearchVehicleScreen from './SearchVehicleScreen';
 import MyQRScreen from './MyQRScreen';
+import ScanResultScreen from './ScanResultScreen';
 import ChatListScreen from './ChatListScreen';
 import ChatScreen from './ChatScreen';
 import { UserProvider } from './UserContext';
@@ -100,6 +101,7 @@ function App() {
                 <Stack.Screen name="Profile" component={ProfileScreen} />
                 <Stack.Screen name="SearchVehicle" component={SearchVehicleScreen} />
                 <Stack.Screen name="MyQR" component={MyQRScreen} />
+                <Stack.Screen name="ScanResult" component={ScanResultScreen} />
                 <Stack.Screen name="ChatList" component={ChatListScreen} />
                 <Stack.Screen name="Chat" component={ChatScreen} />
             </Stack.Navigator>

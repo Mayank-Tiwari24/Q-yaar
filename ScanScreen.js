@@ -134,39 +134,20 @@ const ScanScreen = ({ route }) => {
         qrId = qrId.trim();
 
         if (!mobileNumber) {
-            Alert.alert('Error', 'Please login first to use chat feature.');
+            Alert.alert('Error', 'Please login first to scan a QR code.');
             setLoading(false);
             setScanned(false);
             return;
         }
 
-        try {
-            const res = await fetch(`${API_URL}/chat/initiate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ qrId, scannerMobile: mobileNumber }),
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                navigation.navigate('Chat', {
-                    sessionId: data.data.sessionId,
-                    mobileNumber,
-                    ownerName: data.data.ownerName,
-                    vehicleNumber: data.data.vehicleNumber,
-                    role: 'scanner',
-                });
-            } else {
-                Alert.alert('Chat Error', data.message || 'Unable to start chat.');
-                setScanned(false);
-            }
-        } catch (err) {
-            console.error('Chat initiate error:', err);
-            Alert.alert('Connection Error', 'Could not connect to server. Please try again.');
-            setScanned(false);
-        } finally {
+        // Navigate to the intermediate ScanResultScreen
+        navigation.navigate('ScanResult', { qrId });
+        
+        // Reset scanner state after navigating away
+        setTimeout(() => {
             setLoading(false);
-        }
+            setScanned(false);
+        }, 500);
     };
 
     const handleSimulateScan = () => {
