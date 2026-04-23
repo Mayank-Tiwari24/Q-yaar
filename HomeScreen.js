@@ -88,7 +88,9 @@ const getGreeting = () => {
 // ─── HomeScreen ─────────────────────────────────────────────────────────────
 const HomeScreen = ({ route, expoPushToken }) => {
     const navigation = useNavigation();
-    const { userData: ctxUserData, mobileNumber: ctxMobile, loginUser, updateUserData } = useUser();
+    const { userData: ctxUserData, mobileNumber: ctxMobile, loginUser, updateUserData, animationsPlayed, markAnimationPlayed } = useUser();
+
+    const hasPlayed = animationsPlayed['Home'];
 
     // On first load from Login, store data in context
     const routeUserData = route?.params?.userData || null;
@@ -121,21 +123,23 @@ const HomeScreen = ({ route, expoPushToken }) => {
     const notifCount = userData?.notifications?.length || 0;
 
     // Animations
-    const fadeHeader = useRef(new Animated.Value(0)).current;
-    const fadeHero = useRef(new Animated.Value(0)).current;
-    const slideHero = useRef(new Animated.Value(30)).current;
-    const fadeActions = useRef(new Animated.Value(0)).current;
-    const slideActions = useRef(new Animated.Value(30)).current;
-    const fadeReminders = useRef(new Animated.Value(0)).current;
-    const slideReminders = useRef(new Animated.Value(30)).current;
-    const fadeActivity = useRef(new Animated.Value(0)).current;
-    const slideActivity = useRef(new Animated.Value(30)).current;
-    const fadeQr = useRef(new Animated.Value(0)).current;
-    const slideQr = useRef(new Animated.Value(30)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
-    const progressAnim = useRef(new Animated.Value(0)).current;
+    const fadeHeader = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeHero = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideHero = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeActions = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideActions = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeReminders = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideReminders = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeActivity = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideActivity = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeQr = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideQr = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const progressAnim = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
 
     useEffect(() => {
+        if (hasPlayed) return;
+
         Animated.sequence([
             Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }),
             Animated.parallel([
@@ -167,7 +171,7 @@ const HomeScreen = ({ route, expoPushToken }) => {
             duration: 1200,
             delay: 800,
             useNativeDriver: false,
-        }).start();
+        }).start(() => markAnimationPlayed('Home'));
     }, []);
 
     return (

@@ -15,6 +15,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import API_URL from './config';
+import { useUser } from './UserContext';
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
 const C = {
@@ -84,18 +85,20 @@ const groupNotifications = (notifications) => {
 // ─── ActivityScreen ─────────────────────────────────────────────────────────
 const ActivityScreen = ({ route }) => {
     const navigation = useNavigation();
-    const userData = route?.params?.userData || null;
-    const mobileNumber = route?.params?.mobileNumber || '';
+    const { userData: ctxUserData, mobileNumber: ctxMobile, animationsPlayed, markAnimationPlayed } = useUser();
+    const hasPlayed = animationsPlayed['Activity'];
+    const userData = ctxUserData || route?.params?.userData || null;
+    const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
 
     const [activities, setActivities] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Animations
-    const fadeHeader = useRef(new Animated.Value(0)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
-    const listAnim = useRef(new Animated.Value(0)).current;
-    const listSlide = useRef(new Animated.Value(40)).current;
+    const fadeHeader = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const listAnim = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const listSlide = useRef(new Animated.Value(hasPlayed ? 0 : 40)).current;
 
     // Fetch notifications from backend
     const fetchNotifications = useCallback(async () => {
@@ -137,12 +140,14 @@ const ActivityScreen = ({ route }) => {
     }, [fetchNotifications]);
 
     useEffect(() => {
+        if (hasPlayed) return;
+
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
         Animated.parallel([
             Animated.timing(listAnim, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
             Animated.spring(listSlide, { toValue: 0, friction: 8, delay: 100, useNativeDriver: true }),
         ]).start();
-        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start();
+        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start(() => markAnimationPlayed('Activity'));
     }, []);
 
     const handleNavTab = (key) => {

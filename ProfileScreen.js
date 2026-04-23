@@ -44,7 +44,8 @@ const NAV_TABS = [
 // ─── ProfileScreen ──────────────────────────────────────────────────────────
 const ProfileScreen = () => {
     const navigation = useNavigation();
-    const { userData, mobileNumber, logoutUser } = useUser();
+    const { userData, mobileNumber, logoutUser, animationsPlayed, markAnimationPlayed } = useUser();
+    const hasPlayed = animationsPlayed['Profile'];
 
     // Get user info from context
     const ownerName = userData?.vehicles?.[0]?.vehicleData?.ownerName || 'User';
@@ -52,18 +53,20 @@ const ProfileScreen = () => {
     const vehicleCount = userData?.vehicles?.length || 0;
 
     // Animations
-    const fadeHeader = useRef(new Animated.Value(0)).current;
-    const fadeContent = useRef(new Animated.Value(0)).current;
-    const slideContent = useRef(new Animated.Value(30)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
+    const fadeHeader = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeContent = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideContent = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
 
     useEffect(() => {
+        if (hasPlayed) return;
+
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
         Animated.parallel([
             Animated.timing(fadeContent, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
             Animated.spring(slideContent, { toValue: 0, friction: 8, delay: 100, useNativeDriver: true }),
         ]).start();
-        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start();
+        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start(() => markAnimationPlayed('Profile'));
     }, []);
 
     const handleNavTab = (key) => {

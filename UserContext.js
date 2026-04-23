@@ -5,6 +5,7 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
     const [userData, setUserData] = useState(null);
     const [mobileNumber, setMobileNumber] = useState('');
+    const [animationsPlayed, setAnimationsPlayed] = useState({});
 
     const loginUser = (mobile, data) => {
         setMobileNumber(mobile);
@@ -15,17 +16,24 @@ export const UserProvider = ({ children }) => {
         setUserData(data);
     };
 
+    const markAnimationPlayed = (screenName) => {
+        setAnimationsPlayed(prev => ({ ...prev, [screenName]: true }));
+    };
+
     const logoutUser = () => {
         setMobileNumber('');
         setUserData(null);
+        setAnimationsPlayed({});
     };
 
     return (
         <UserContext.Provider value={{
             userData,
             mobileNumber,
+            animationsPlayed,
             loginUser,
             updateUserData,
+            markAnimationPlayed,
             logoutUser,
         }}>
             {children}

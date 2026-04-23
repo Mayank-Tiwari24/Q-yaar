@@ -14,6 +14,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useUser } from './UserContext';
 import API_URL from './config';
 
 const { width } = Dimensions.get('window');
@@ -49,8 +50,10 @@ const NAV_TABS = [
 // ─── VehiclesScreen ─────────────────────────────────────────────────────────
 const VehiclesScreen = ({ route }) => {
     const navigation = useNavigation();
-    const userData = route?.params?.userData || null;
-    const mobileNumber = route?.params?.mobileNumber || '';
+    const { userData: ctxUserData, mobileNumber: ctxMobile, animationsPlayed, markAnimationPlayed } = useUser();
+    const hasPlayed = animationsPlayed['Vehicles'];
+    const userData = ctxUserData || route?.params?.userData || null;
+    const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
 
     // Transform backend data to vehicle cards
     const vehicles = useMemo(() => {
@@ -70,18 +73,20 @@ const VehiclesScreen = ({ route }) => {
     }, [userData]);
 
     // Animations
-    const fadeHeader = useRef(new Animated.Value(0)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
+    const fadeHeader = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
     const cardAnims = useRef(
         Array.from({ length: Math.max(vehicles.length, 1) }, () => ({
-            opacity: new Animated.Value(0),
-            slide: new Animated.Value(40),
+            opacity: new Animated.Value(hasPlayed ? 1 : 0),
+            slide: new Animated.Value(hasPlayed ? 0 : 40),
         }))
     ).current;
-    const fadeFab = useRef(new Animated.Value(0)).current;
-    const scaleFab = useRef(new Animated.Value(0.5)).current;
+    const fadeFab = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const scaleFab = useRef(new Animated.Value(hasPlayed ? 1 : 0.5)).current;
 
     useEffect(() => {
+        if (hasPlayed) return;
+
         // Header fade
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
 
@@ -101,8 +106,8 @@ const VehiclesScreen = ({ route }) => {
         ]).start();
 
         // Nav
-        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 500, useNativeDriver: true }).start();
-    }, []);
+        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 400, useNativeDriver: true }).start(() => markAnimationPlayed('Vehicles'));
+    }, [vehicles.length]);
 
     const handleNavTab = (key) => {
         if (key === 'home') navigation.navigate('Home');

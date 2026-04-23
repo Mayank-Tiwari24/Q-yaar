@@ -57,7 +57,8 @@ const ScannerCorner = ({ style }) => (
 // ─── ScanScreen ─────────────────────────────────────────────────────────────
 const ScanScreen = ({ route }) => {
     const navigation = useNavigation();
-    const { mobileNumber: ctxMobile } = useUser();
+    const { mobileNumber: ctxMobile, animationsPlayed, markAnimationPlayed } = useUser();
+    const hasPlayed = animationsPlayed['Scan'];
     const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
     const [permission, requestPermission] = useCameraPermissions();
     const [flashOn, setFlashOn] = useState(false);
@@ -65,33 +66,35 @@ const ScanScreen = ({ route }) => {
     const [loading, setLoading] = useState(false);
 
     // Animations
-    const fadeIn = useRef(new Animated.Value(0)).current;
-    const fadeScanner = useRef(new Animated.Value(0)).current;
+    const fadeIn = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeScanner = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
     const scanLineAnim = useRef(new Animated.Value(0)).current;
     const pulseAnim = useRef(new Animated.Value(1)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
-    const fadeButtons = useRef(new Animated.Value(0)).current;
-    const slideButtons = useRef(new Animated.Value(30)).current;
-    const fadeInfo = useRef(new Animated.Value(0)).current;
-    const slideInfo = useRef(new Animated.Value(20)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeButtons = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideButtons = useRef(new Animated.Value(hasPlayed ? 0 : 30)).current;
+    const fadeInfo = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const slideInfo = useRef(new Animated.Value(hasPlayed ? 0 : 20)).current;
 
     const isWeb = Platform.OS === 'web';
     const cameraGranted = permission?.granted;
 
     useEffect(() => {
-        Animated.sequence([
-            Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(fadeScanner, { toValue: 1, duration: 500, useNativeDriver: true }),
-            Animated.parallel([
-                Animated.timing(fadeButtons, { toValue: 1, duration: 400, useNativeDriver: true }),
-                Animated.spring(slideButtons, { toValue: 0, friction: 8, useNativeDriver: true }),
-            ]),
-            Animated.parallel([
-                Animated.timing(fadeInfo, { toValue: 1, duration: 400, useNativeDriver: true }),
-                Animated.spring(slideInfo, { toValue: 0, friction: 8, useNativeDriver: true }),
-            ]),
-            Animated.timing(fadeNav, { toValue: 1, duration: 300, useNativeDriver: true }),
-        ]).start();
+        if (!hasPlayed) {
+            Animated.sequence([
+                Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }),
+                Animated.timing(fadeScanner, { toValue: 1, duration: 500, useNativeDriver: true }),
+                Animated.parallel([
+                    Animated.timing(fadeButtons, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.spring(slideButtons, { toValue: 0, friction: 8, useNativeDriver: true }),
+                ]),
+                Animated.parallel([
+                    Animated.timing(fadeInfo, { toValue: 1, duration: 400, useNativeDriver: true }),
+                    Animated.spring(slideInfo, { toValue: 0, friction: 8, useNativeDriver: true }),
+                ]),
+                Animated.timing(fadeNav, { toValue: 1, duration: 300, useNativeDriver: true }),
+            ]).start(() => markAnimationPlayed('Scan'));
+        }
 
         // Scan line animation loop
         Animated.loop(

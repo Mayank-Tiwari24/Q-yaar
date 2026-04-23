@@ -61,7 +61,8 @@ const formatTime = (dateStr) => {
 // ─── ChatListScreen ─────────────────────────────────────────────────────────
 const ChatListScreen = ({ route }) => {
     const navigation = useNavigation();
-    const { mobileNumber: ctxMobile } = useUser();
+    const { mobileNumber: ctxMobile, animationsPlayed, markAnimationPlayed } = useUser();
+    const hasPlayed = animationsPlayed['ChatList'];
     const mobileNumber = ctxMobile || route?.params?.mobileNumber || '';
 
     const [chats, setChats] = useState([]);
@@ -69,10 +70,10 @@ const ChatListScreen = ({ route }) => {
     const [refreshing, setRefreshing] = useState(false);
 
     // Animations
-    const fadeHeader = useRef(new Animated.Value(0)).current;
-    const fadeNav = useRef(new Animated.Value(0)).current;
-    const listAnim = useRef(new Animated.Value(0)).current;
-    const listSlide = useRef(new Animated.Value(40)).current;
+    const fadeHeader = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const fadeNav = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const listAnim = useRef(new Animated.Value(hasPlayed ? 1 : 0)).current;
+    const listSlide = useRef(new Animated.Value(hasPlayed ? 0 : 40)).current;
 
     const fetchChats = useCallback(async () => {
         if (!mobileNumber) {
@@ -102,12 +103,14 @@ const ChatListScreen = ({ route }) => {
     );
 
     useEffect(() => {
+        if (hasPlayed) return;
+
         Animated.timing(fadeHeader, { toValue: 1, duration: 400, useNativeDriver: true }).start();
         Animated.parallel([
             Animated.timing(listAnim, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
             Animated.spring(listSlide, { toValue: 0, friction: 8, delay: 100, useNativeDriver: true }),
         ]).start();
-        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start();
+        Animated.timing(fadeNav, { toValue: 1, duration: 300, delay: 300, useNativeDriver: true }).start(() => markAnimationPlayed('ChatList'));
     }, []);
 
     const onRefresh = useCallback(async () => {
