@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
   const isHome = location.pathname === '/'
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function Navbar() {
             >{item.label}</button>
           ))}
           <button className="btn btn-primary" style={{ padding: '10px 24px', fontSize: 13, marginLeft: 8 }}
-            onClick={() => scrollTo('download')}>
+            onClick={() => navigate('/download')}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download App
           </button>
@@ -112,7 +113,7 @@ export default function Navbar() {
             }}>{id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</button>
           ))}
           <button className="btn btn-primary" style={{ marginTop: 8, justifyContent: 'center' }}
-            onClick={() => scrollTo('download')}>Download App</button>
+            onClick={() => navigate('/download')}>Download App</button>
         </div>
       )}
 

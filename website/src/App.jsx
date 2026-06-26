@@ -4,6 +4,8 @@ import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import QRScanPage from './pages/QRScanPage'
+import DownloadPage from './pages/DownloadPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/qr/:qrId" element={<QRScanPage />} />
+        <Route path="/download" element={<DownloadPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Footer />
       <Toaster

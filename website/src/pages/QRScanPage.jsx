@@ -170,10 +170,10 @@ export default function QRScanPage() {
 
           {/* Download buttons */}
           <div className="anim-fade-up delay-4" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 160 }}>
+            <a href="/download" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center', minWidth: 160, textDecoration: 'none' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Download App
-            </button>
+            </a>
             <Link to="/" className="btn btn-outline" style={{ flex: 1, justifyContent: 'center', minWidth: 160 }}>
               Learn More
             </Link>
@@ -210,7 +210,7 @@ export default function QRScanPage() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary">Download Q Yaar App</button>
+            <a href="/download" className="btn btn-primary" style={{ textDecoration: 'none' }}>Download Q Yaar App</a>
             <Link to="/" className="btn btn-outline">Visit Homepage</Link>
           </div>
         </div>
@@ -372,12 +372,16 @@ export default function QRScanPage() {
         )}
 
         {/* Download CTA */}
-        <div className="anim-fade-up delay-5" style={{
-          background: 'linear-gradient(135deg, #073B3A, #0A4D4A)',
-          borderRadius: 20, padding: 24, marginTop: 24,
-          display: 'flex', alignItems: 'center', gap: 20,
-          border: '1px solid rgba(94,234,212,0.12)',
-        }}>
+          <a href="/download" style={{
+            display: 'flex', alignItems: 'center', gap: 20, textDecoration: 'none',
+            background: 'linear-gradient(135deg, #073B3A, #0A4D4A)',
+            borderRadius: 20, padding: 24, marginTop: 24,
+            border: '1px solid rgba(94,234,212,0.12)',
+            transition: 'border-color 0.3s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(94,234,212,0.35)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(94,234,212,0.12)'}
+          >
           <div style={{
             width: 52, height: 52, borderRadius: 16,
             background: 'rgba(94,234,212,0.15)',
@@ -390,9 +394,9 @@ export default function QRScanPage() {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: 16, fontWeight: 800, color: 'white', marginBottom: 4 }}>Want Q Yaar for your vehicle?</p>
-            <p style={{ fontSize: 13, color: 'rgba(94,234,212,0.8)' }}>Download the app & get your own smart QR!</p>
+            <p style={{ fontSize: 13, color: 'rgba(94,234,212,0.8)' }}>Tap here to download the app & get your own smart QR!</p>
           </div>
-        </div>
+          </a>
 
         <Link to="/" style={{
           display: 'block', textAlign: 'center', marginTop: 32,

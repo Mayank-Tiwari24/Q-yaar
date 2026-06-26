@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import Navbar from './components/Navbar';
 import GeneratePage from './pages/GeneratePage';
 import QRScanPage from './pages/QRScanPage';
+import NotFoundPage from './pages/NotFoundPage';
 import './index.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<GeneratePage />} />
                     <Route path="/qr/:qrId" element={<QRScanPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
                 </Routes>
 
                 <Toaster
