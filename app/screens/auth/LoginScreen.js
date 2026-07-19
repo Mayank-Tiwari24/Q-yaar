@@ -14,7 +14,7 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
-import API_URL from './config';
+import API_URL from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, {
     Rect,

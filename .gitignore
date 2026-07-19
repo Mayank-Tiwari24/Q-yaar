@@ -25,5 +25,6 @@ Thumbs.db
 .vscode/
 .idea/
 
+# APK builds
 *.apk
 website/public/*.apk

@@ -14,8 +14,8 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useUser } from './UserContext';
-import API_URL from './config';
+import { useUser } from '../../context/UserContext';
+import API_URL from '../../config/api';
 
 const { width } = Dimensions.get('window');
 

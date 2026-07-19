@@ -14,8 +14,8 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import API_URL from './config';
-import { useUser } from './UserContext';
+import API_URL from '../../config/api';
+import { useUser } from '../../context/UserContext';
 
 // ─── Design Tokens ──────────────────────────────────────────────────────────
 const C = {

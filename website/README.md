@@ -1,16 +1,14 @@
-# React + Vite
+# Q Yaar Public Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the main landing page website for Q Yaar (built with React + Vite). 
+It explains the product features and provides a direct download link for the Android APK.
 
-Currently, two official plugins are available:
+## Folder Structure
+- `src/pages/`: Contains the main page views (`LandingPage`, `DownloadPage`, `QRScanPage`).
+- `src/components/`: Reusable UI pieces (`Navbar`, `Footer`).
+- `src/index.css`: Contains all the global styles, CSS variables, and animations.
+- `public/`: Contains static assets, **including the actual `Q-Yaar-v1.0.0.apk` file** that gets downloaded.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Getting Started
+1. Run `npm install` to install dependencies.
+2. Run `npm run dev` to start the local development server.

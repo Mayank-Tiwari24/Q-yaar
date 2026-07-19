@@ -14,8 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import API_URL from './config';
-import { useUser } from './UserContext';
+import API_URL from '../../config/api';
+import { useUser } from '../../context/UserContext';
 
 const { width } = Dimensions.get('window');
 const SCANNER_SIZE = width - 80;

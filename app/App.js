@@ -10,27 +10,27 @@ LogBox.ignoreLogs([
     'expo-notifications',
     '`expo-notifications` functionality is not fully supported',
 ]);
-import OnboardingScreen from './OnboardingScreen';
-import SelectionScreen from './SelectionScreen';
-import LoginScreen from './LoginScreen';
-import RegisterScreen from './RegisterScreen';
-import UserDetailsScreen from './UserDetailsScreen';
-import HomeScreen from './HomeScreen';
-import ScanScreen from './ScanScreen';
-import VehiclesScreen from './VehiclesScreen';
-import ActivityScreen from './ActivityScreen';
-import ProfileScreen from './ProfileScreen';
-import SearchVehicleScreen from './SearchVehicleScreen';
-import MyQRScreen from './MyQRScreen';
-import ScanResultScreen from './ScanResultScreen';
-import ChatListScreen from './ChatListScreen';
-import ChatScreen from './ChatScreen';
-import { UserProvider } from './UserContext';
+import OnboardingScreen from './screens/auth/OnboardingScreen';
+import SelectionScreen from './screens/auth/SelectionScreen';
+import LoginScreen from './screens/auth/LoginScreen';
+import RegisterScreen from './screens/auth/RegisterScreen';
+import UserDetailsScreen from './screens/auth/UserDetailsScreen';
+import HomeScreen from './screens/main/HomeScreen';
+import ScanScreen from './screens/main/ScanScreen';
+import VehiclesScreen from './screens/main/VehiclesScreen';
+import ActivityScreen from './screens/main/ActivityScreen';
+import ProfileScreen from './screens/main/ProfileScreen';
+import SearchVehicleScreen from './screens/main/SearchVehicleScreen';
+import MyQRScreen from './screens/main/MyQRScreen';
+import ScanResultScreen from './screens/main/ScanResultScreen';
+import ChatListScreen from './screens/chat/ChatListScreen';
+import ChatScreen from './screens/chat/ChatScreen';
+import { UserProvider } from './context/UserContext';
 import {
     registerForPushNotifications,
     addNotificationReceivedListener,
     addNotificationResponseListener,
-} from './notifications';
+} from './services/notifications';
 
 const Stack = createNativeStackNavigator();
 

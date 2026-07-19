@@ -28,7 +28,7 @@ import Svg, {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import API_URL from './config';
+import API_URL from '../../config/api';
 
 const { width } = Dimensions.get('window');
 

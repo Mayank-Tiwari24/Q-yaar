@@ -16,7 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { io } from 'socket.io-client';
-import API_URL from './config';
+import API_URL from '../../config/api';
 
 const { width } = Dimensions.get('window');
 

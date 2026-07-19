@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useUser } from './UserContext';
+import { useUser } from '../../context/UserContext';
 
 const { width } = Dimensions.get('window');
 
