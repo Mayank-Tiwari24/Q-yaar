@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+dist/
+build/
+*.apk
+*.aab
+*.ipa
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
